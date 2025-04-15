@@ -1,0 +1,154 @@
+{% load humanize %}
+<style>
+  .grid-container {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  table.grid {
+    width: 100%;
+    table-layout: auto;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+
+  table.grid th, table.grid td {
+    border: 1px solid #ddd;
+    padding: 6px;
+    text-align: center;
+    white-space: nowrap;
+    font-size: 0.85rem;
+  }
+
+  table.grid th {
+    position: sticky;
+    top: 0;
+    background-color: #f5f5f5;
+    z-index: 2;
+  }
+
+  .filter-form {
+    margin: 16px 0;
+  }
+</style>
+
+<script>
+  function applyFilter() {
+    const yfrom = parseInt(document.getElementById('year_from').value || 0);
+    const mfrom = parseInt(document.getElementById('month_from').value || 1);
+    const yto = parseInt(document.getElementById('year_to').value || 9999);
+    const mto = parseInt(document.getElementById('month_to').value || 12);
+
+    const rows = document.querySelectorAll("#data-rows tr");
+    const sums = {};
+    const counts = {};
+
+    rows.forEach(row => {
+      const y = parseInt(row.dataset.year);
+      const m = parseInt(row.dataset.month);
+      const dateInRange = (y > yfrom || (y === yfrom && m >= mfrom)) && (y < yto || (y === yto && m <= mto));
+
+      row.style.display = dateInRange ? '' : 'none';
+      if (!dateInRange) return;
+
+      if (!sums[y]) {
+        sums[y] = {
+          revenue_target: 0,
+          revenue_sales: 0,
+          revenue_ratio: 0,
+          cost_cost: 0,
+          cost_goods: 0,
+          cost_outsourcing: 0,
+          sgna: 0,
+          op_target: 0,
+          op_operating_profit: 0,
+          op_ratio: 0,
+          op_margin: 0
+        };
+        counts[y] = 0;
+      }
+
+      sums[y].revenue_target += parseFloat(row.dataset.revenue_target);
+      sums[y].revenue_sales += parseFloat(row.dataset.revenue_sales);
+      sums[y].revenue_ratio += parseFloat(row.dataset.revenue_ratio);
+      sums[y].cost_cost += parseFloat(row.dataset.cost_cost);
+      sums[y].cost_goods += parseFloat(row.dataset.cost_goods);
+      sums[y].cost_outsourcing += parseFloat(row.dataset.cost_outsourcing);
+      sums[y].sgna += parseFloat(row.dataset.sgna);
+      sums[y].op_target += parseFloat(row.dataset.op_target);
+      sums[y].op_operating_profit += parseFloat(row.dataset.op_operating_profit);
+      sums[y].op_ratio += parseFloat(row.dataset.op_ratio);
+      sums[y].op_margin += parseFloat(row.dataset.op_margin);
+      counts[y]++;
+    });
+
+    const tbody = document.getElementById('summary-body');
+    tbody.innerHTML = Object.keys(sums).sort().map(year => {
+      const s = sums[year];
+      const c = counts[year];
+      function f(v) {
+        const n = Math.round(v * 1e10) / 1e10;
+        return n.toLocaleString(undefined, {maximumFractionDigits: 10});
+      }
+      return `<tr><td>${year}</td>
+        <td>${f(s.revenue_target)}</td>
+        <td>${f(s.revenue_sales)}</td>
+        <td>${f(s.revenue_ratio / c)}%</td>
+        <td>${f(s.cost_cost)}</td>
+        <td>${f(s.cost_goods)}</td>
+        <td>${f(s.cost_outsourcing)}</td>
+        <td>${f(s.sgna)}</td>
+        <td>${f(s.op_target)}</td>
+        <td>${f(s.op_operating_profit)}</td>
+        <td>${f(s.op_ratio / c)}%</td>
+        <td>${f(s.op_margin / c)}%</td>
+      </tr>`
+    }).join('');
+  }
+
+  document.addEventListener("DOMContentLoaded", applyFilter);
+</script>
+
+<div class="filter-form">
+  <label>From: <input type="number" id="year_from" placeholder="Year" onchange="applyFilter()"></label>
+  <label><input type="number" id="month_from" placeholder="Month" onchange="applyFilter()"></label>
+  ~
+  <label>To: <input type="number" id="year_to" placeholder="Year" onchange="applyFilter()"></label>
+  <label><input type="number" id="month_to" placeholder="Month" onchange="applyFilter()"></label>
+</div>
+
+<div class="grid-container">
+  <table class="grid">
+    <thead>
+      <tr>
+        <th>Year</th>
+        <th>Revenue Target</th>
+        <th>Sales</th>
+        <th>Revenue Ratio</th>
+        <th>Cost</th>
+        <th>Goods</th>
+        <th>Outsourcing</th>
+        <th>SGNA</th>
+        <th>OP Target</th>
+        <th>Operating Profit</th>
+        <th>OP Ratio</th>
+        <th>OP Margin</th>
+      </tr>
+    </thead>
+    <tbody id="summary-body"></tbody>
+  </table>
+</div>
+
+<table style="display:none">
+  <tbody id="data-rows">
+    {% for r in records %}
+    <tr
+      data-year="{{ r.year }}" data-month="{{ r.month }}"
+      data-revenue_target="{{ r.revenue_target }}" data-revenue_sales="{{ r.revenue_sales }}" data-revenue_ratio="{{ r.revenue_ratio }}"
+      data-cost_cost="{{ r.cost_cost }}" data-cost_goods="{{ r.cost_goods }}" data-cost_outsourcing="{{ r.cost_outsourcing }}"
+      data-sgna="{{ r.sgna }}" data-op_target="{{ r.op_target }}" data-op_operating_profit="{{ r.op_operating_profit }}"
+      data-op_ratio="{{ r.op_ratio }}" data-op_margin="{{ r.op_margin }}">
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

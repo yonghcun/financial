@@ -1,0 +1,92 @@
+{% load humanize %}
+<style>
+  .summary-table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.85rem;
+  }
+  .summary-table th, .summary-table td {
+    border: 1px solid #ccc;
+    padding: 6px;
+    text-align: right;
+    white-space: nowrap;
+  }
+  .summary-table th {
+    background-color: #e0e7f5;
+    text-align: center;
+  }
+  .summary-table td:first-child {
+    font-weight: bold;
+    background-color: #f6f9fc;
+    text-align: left;
+  }
+  .highlight {
+    background-color: #fef6e7;
+  }
+</style>
+
+<script>
+  function format(n) {
+    const num = parseFloat(n || 0);
+    return isNaN(num) ? '' : num.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  }
+  function percent(v1, v2) {
+    if (!v1 || !v2 || parseFloat(v1) === 0) return '0%';
+    const val = Math.round((parseFloat(v2) / parseFloat(v1) * 100) - 100);
+    return (val > 0 ? '+' : '') + val + '%';
+  }
+  function percentDirect(v1, v2) {
+    if (!v1 || !v2 || parseFloat(v1) === 0) return '0%';
+    const val = Math.round((parseFloat(v2) / parseFloat(v1)) * 100);
+    return val + '%';
+  }
+  function calcSummary() {
+    const rows = ['Sales', 'Cost', 'SGNA', 'OP'];
+    const html = rows.map(row => {
+      const fyGoal = document.getElementById(`${row}_fyGoal`).value;
+      const fyEst = document.getElementById(`${row}_fyEst`).value;
+      const thisGoal = document.getElementById(`${row}_thisGoal`).value;
+      const thisCurr = document.getElementById(`${row}_thisCurr`).value;
+      const prev = document.getElementById(`${row}_prev`).value;
+      const last = document.getElementById(`${row}_last`).value;
+      return `<tr${row==='OP' ? ' class="highlight"' : ''}><td>${row}</td>
+        <td>${format(fyGoal)}</td><td>${format(fyEst)}</td><td>${percentDirect(fyGoal, fyEst)}</td>
+        <td>${format(thisGoal)}</td><td>${format(thisCurr)}</td><td>${percentDirect(thisGoal, thisCurr)}</td>
+        <td>${format(prev)}</td><td>${percent(prev, thisCurr)}</td>
+        <td>${format(last)}</td><td>${percent(last, thisCurr)}</td></tr>`
+    }).join('\n');
+    document.getElementById("summaryBody").innerHTML = html;
+  }
+</script>
+
+<h3>📊 Summary Generator</h3>
+<table>
+  <thead><tr><th>항목</th><th>FY Goal</th><th>FY Est</th><th>This Goal</th><th>This Curr</th><th>Previous</th><th>Last Year</th></tr></thead>
+  <tbody>
+    <tr><td>Sales</td><td><input id="Sales_fyGoal"></td><td><input id="Sales_fyEst"></td><td><input id="Sales_thisGoal"></td><td><input id="Sales_thisCurr"></td><td><input id="Sales_prev"></td><td><input id="Sales_last"></td></tr>
+    <tr><td>Cost</td><td><input id="Cost_fyGoal"></td><td><input id="Cost_fyEst"></td><td><input id="Cost_thisGoal"></td><td><input id="Cost_thisCurr"></td><td><input id="Cost_prev"></td><td><input id="Cost_last"></td></tr>
+    <tr><td>SGNA</td><td><input id="SGNA_fyGoal"></td><td><input id="SGNA_fyEst"></td><td><input id="SGNA_thisGoal"></td><td><input id="SGNA_thisCurr"></td><td><input id="SGNA_prev"></td><td><input id="SGNA_last"></td></tr>
+    <tr><td>OP</td><td><input id="OP_fyGoal"></td><td><input id="OP_fyEst"></td><td><input id="OP_thisGoal"></td><td><input id="OP_thisCurr"></td><td><input id="OP_prev"></td><td><input id="OP_last"></td></tr>
+  </tbody>
+</table>
+<button onclick="calcSummary()">통계표 생성</button>
+
+<h4>📈 통계표</h4>
+<table class="summary-table">
+  <thead>
+    <tr>
+      <th>RnD</th>
+      <th colspan="3">FY2025</th>
+      <th colspan="3">25.04</th>
+      <th colspan="2">25.03</th>
+      <th colspan="2">24.04</th>
+    </tr>
+    <tr>
+      <th></th><th>Goal</th><th>Estimated</th><th>%</th>
+      <th>Goal</th><th>Current</th><th>%</th>
+      <th>Previous</th><th>%</th>
+      <th>Last year</th><th>%</th>
+    </tr>
+  </thead>
+  <tbody id="summaryBody"></tbody>
+</table>

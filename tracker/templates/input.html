@@ -1,0 +1,44 @@
+{% load humanize %}
+<script>
+  function formatNumber(input) {
+    let value = input.value.replace(/,/g, '');
+    if (!isNaN(value) && value !== '') {
+      input.value = parseFloat(value).toLocaleString('en-US');
+    }
+  }
+</script>
+
+<form method="post" oninput="
+    let rt = parseFloat(revenue_target.value.replace(/,/g, '')) || 0;
+    let rs = parseFloat(revenue_sales.value.replace(/,/g, '')) || 0;
+    let ot = parseFloat(op_target.value.replace(/,/g, '')) || 0;
+    let op = parseFloat(op_operating_profit.value.replace(/,/g, '')) || 0;
+    revenue_ratio.value = rt ? (rs / rt).toFixed(10) : 0;
+    op_ratio.value = ot ? (op / ot).toFixed(10) : 0;
+    op_margin.value = rs ? (op / rs).toFixed(10) : 0;
+">
+  {% csrf_token %}
+  <input name="year" placeholder="Year" value="{{ record.year|default_if_none:0 }}">
+  <input name="month" placeholder="Month" value="{{ record.month|default_if_none:0 }}">
+
+  <h3>Revenue</h3>
+  <input name="revenue_target" id="revenue_target" placeholder="Revenue Target" value="{{ record.revenue_target|floatformat:"0"|default_if_none:0|intcomma }}" onblur="formatNumber(this)">
+  <input name="revenue_sales" id="revenue_sales" placeholder="Sales" value="{{ record.revenue_sales|floatformat:"0"|default_if_none:0|intcomma }}" onblur="formatNumber(this)">
+  <input name="revenue_ratio" id="revenue_ratio" placeholder="%" value="{{ record.revenue_ratio|default_if_none:0 }}" readonly>
+
+  <h3>Cost</h3>
+  <input name="cost_cost" placeholder="Cost" value="{{ record.cost_cost|floatformat:"0"|default_if_none:0|intcomma }}" onblur="formatNumber(this)">
+  <input name="cost_goods" placeholder="Cost - Goods" value="{{ record.cost_goods|floatformat:"0"|default_if_none:0|intcomma }}" onblur="formatNumber(this)">
+  <input name="cost_outsourcing" placeholder="Cost - Outsourcing" value="{{ record.cost_outsourcing|floatformat:"0"|default_if_none:0|intcomma }}" onblur="formatNumber(this)">
+
+  <h3>SGNA</h3>
+  <input name="sgna" placeholder="SGNA" value="{{ record.sgna|floatformat:"0"|default_if_none:0|intcomma }}" onblur="formatNumber(this)">
+
+  <h3>Operating Profit</h3>
+  <input name="op_target" id="op_target" placeholder="OP Target" value="{{ record.op_target|floatformat:"0"|default_if_none:0|intcomma }}" onblur="formatNumber(this)">
+  <input name="op_operating_profit" id="op_operating_profit" placeholder="Operating Profit" value="{{ record.op_operating_profit|floatformat:"0"|default_if_none:0|intcomma }}" onblur="formatNumber(this)">
+  <input name="op_ratio" id="op_ratio" placeholder="%" value="{{ record.op_ratio|default_if_none:0 }}" readonly>
+  <input name="op_margin" id="op_margin" placeholder="OP Margin" value="{{ record.op_margin|default_if_none:0 }}" readonly>
+
+  <button type="submit">저장</button>
+</form>
