@@ -2,11 +2,49 @@ from django.shortcuts import render, get_object_or_404, redirect
 from .models import MonthlyPerformance
 from django.http import HttpResponse
 from decimal import Decimal, ROUND_HALF_UP
-
+from openpyxl import load_workbook
+from io import BytesIO
+import os
 import pandas as pd
 
+def export_excel(request):
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    template_path = os.path.join(base_dir, 'tracker', 'templates', '재무양식.xlsx')
+
+    wb = load_workbook(template_path)
+    ws = wb.active
+
+    records = MonthlyPerformance.objects.filter(year=2024).order_by('month')
+
+    start_col = 3
+    for idx, record in enumerate(records):
+        col = start_col + idx
+
+        ws.cell(row=2, column=col, value=record.revenue_target)
+        ws.cell(row=3, column=col, value=record.revenue_sales)
+        ws.cell(row=4, column=col, value=record.revenue_ratio)
+        ws.cell(row=5, column=col, value=record.cost_cost)
+        ws.cell(row=6, column=col, value=record.cost_goods)
+        ws.cell(row=7, column=col, value=record.cost_outsourcing)
+        ws.cell(row=9, column=col, value=record.sgna)
+        ws.cell(row=10, column=col, value=record.op_target)
+        ws.cell(row=11, column=col, value=record.op_operating_profit)
+        ws.cell(row=12, column=col, value=record.op_ratio)
+        ws.cell(row=13, column=col, value=record.op_margin)
+
+    excel_stream = BytesIO()
+    wb.save(excel_stream)
+    excel_stream.seek(0)
+
+    response = HttpResponse(
+        excel_stream,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename=performance_2024.xlsx'
+    return response
+
 def round10(value):
-    clean = str(value).replace(',', '')  # 💡 콤마 제거
+    clean = str(value).replace(',', '')
     return Decimal(clean).quantize(Decimal('1.0000000000'), rounding=ROUND_HALF_UP)
 
 def input_view(request):
@@ -14,7 +52,6 @@ def input_view(request):
         year = int(request.POST['year'])
         month = int(request.POST['month'])
 
-        # 수치 입력값 소수점 10자리 반올림 적용
         revenue_target = round10(request.POST['revenue_target'])
         revenue_sales = round10(request.POST['revenue_sales'])
         revenue_ratio = round10(request.POST['revenue_ratio'])
@@ -65,14 +102,6 @@ def update_view(request, id):
 def view_view(request):
     records = MonthlyPerformance.objects.all().order_by('-year', '-month')
     return render(request, 'view.html', {'records': records})
-
-def export_excel(request):
-    records = MonthlyPerformance.objects.all().values()
-    df = pd.DataFrame(records)
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="performance_report.xlsx"'
-    df.to_excel(response, index=False)
-    return response
 
 def stats_view(request):
     records = MonthlyPerformance.objects.all()

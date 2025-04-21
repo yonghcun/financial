@@ -64,3 +64,9 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
+
+REDMINE_URL = "https://redmine2.fnsyrus.com/"
+API_KEY = "930a791446779f6e719f060ca6c553aafd416540"
+
+REDMINE_URL_KID = "https://redmine.kiwoom.co.id/"
+API_KEY_KID = "dd45697dc50966daeaab7528bc5d7f9047644e52"

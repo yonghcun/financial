@@ -80,13 +80,13 @@
   }
 
   function formatDisplay(numStr) {
-  if (isNaN(numStr) || numStr === '') return '';
-  const rounded = Math.round(Number(numStr) * 1e10) / 1e10;
-  const parts = rounded.toString().split('.');
-  const intPart = parseInt(parts[0]).toLocaleString();
-  const fracPart = parts[1] ? parts[1].replace(/0+$/, '') : '';
-  return fracPart ? intPart + '.' + fracPart : intPart;
-}
+    if (isNaN(numStr) || numStr === '') return '';
+    const rounded = Math.round(Number(numStr) * 1e10) / 1e10;
+    const parts = rounded.toString().split('.');
+    const intPart = parseInt(parts[0]).toLocaleString();
+    const fracPart = parts[1] ? parts[1].replace(/0+$/, '') : '';
+    return fracPart ? intPart + '.' + fracPart : intPart;
+  }
 
   function uncomma(val) {
     return val.replace(/,/g, '');
@@ -139,6 +139,20 @@
     document.getElementById("op_margin").value = trimTrailingZeros((revenue_sales ? (op_operating_profit / revenue_sales * 100) : 0).toFixed(10));
   }
 
+  function calculateOperatingProfitAndRatio() {
+    const revenue_sales = parseFloat(uncomma(document.getElementById("revenue_sales").value)) || 0;
+    const sgna = parseFloat(uncomma(document.getElementById("sgna").value)) || 0;
+    const op_target = parseFloat(uncomma(document.getElementById("op_target").value)) || 0;
+
+    const op_operating_profit = revenue_sales - sgna;
+    document.getElementById("op_operating_profit").value = formatDisplay(op_operating_profit);
+
+    if (op_target !== 0) {
+      const op_ratio = (op_operating_profit / op_target) * 100;
+      document.getElementById("op_ratio").value = trimTrailingZeros(op_ratio.toFixed(10));
+    }
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     const fieldsToComma = [
       "revenue_target", "revenue_sales", "cost_cost", "cost_goods",
@@ -152,13 +166,21 @@
       if (el) el.addEventListener("input", calculateRatios);
     });
 
-    // format grid cells on load
+    const autoCalcTrigger = ["revenue_sales", "sgna", "op_target"];
+    autoCalcTrigger.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener("input", calculateOperatingProfitAndRatio);
+    });
+
     document.querySelectorAll("td[data-raw]").forEach(td => {
       const raw = td.getAttribute("data-raw");
       td.innerText = formatDisplay(raw) + (td.classList.contains("percent") ? '%' : '');
     });
   });
 </script>
+
+<!-- 이하 생략: HTML 폼 테이블은 기존과 동일 -->
+
 
 <div class="top-controls">
   <button type="button" onclick="clearInputs()">입력값 초기화</button>
